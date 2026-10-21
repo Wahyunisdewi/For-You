@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selamat Ulang Tahun Sayang!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fdfbfb, #e2e8f0);
+            color: #1e293b;
+            min-height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        h1, h2, .cursive {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .screen.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
+        /* 3D Box Envelope Styles */
+        .envelope-wrapper {
+            position: relative;
+            width: 320px;
+            height: 220px;
+            margin: 0 auto;
+            cursor: pointer;
+            perspective: 1000px;
+            transition: transform 0.3s;
+        }
+        .envelope-wrapper:hover {
+            transform: translateY(-5px);
+        }
+        .envelope-back {
+            position: absolute;
+            inset: 0;
+            background: #1e3a8a; /* Dark Blue */
+            border-radius: 8px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        .letter {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            height: 200px;
+            background: #ffffff;
+            border-radius: 8px;
+            transition: transform 0.6s ease-in-out;
+            z-index: 2;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .envelope-wrapper.open .letter {
+            transform: translateY(-60px);
+        }
+        .envelope-front {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            border-radius: 8px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        /* Bottom triangle */
+        .envelope-front::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-bottom: 110px solid #1e40af;
+            z-index: 4;
+        }
+        /* Side triangles */
+        .envelope-front::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-left: 160px solid #2563eb;
+            border-right: 160px solid #2563eb;
+            border-bottom: 110px solid transparent;
+            border-top: 110px solid transparent;
+            z-index: 3;
+        }
+        /* Top flap */
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-top: 115px solid #172554;
+            z-index: 5;
+            transform-origin: top;
+            transition: transform 0.6s ease-in-out;
+        }
+        .envelope-wrapper.open .flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        /* Puzzle Styles */
+        .puzzle-container {
+            width: 300px;
+            height: 300px;
+            background: #334155;
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+        }
+        .puzzle-tile {
+            background-color: #64748b;
+            background-image: url('./MYXJ_20250604155247180_save.jpg');
+            background-size: 300px 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: rgba(255,255,255,0.9);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 0.1s;
+            user-select: none;
+        }
+        .puzzle-tile:active { transform: scale(0.95); }
+        .puzzle-tile.empty { background: transparent; cursor: default; }
+
+        /* Confetti & Balloons */
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            width: 40px;
+            height: 50px;
+            background: #ef4444;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            animation: floatUp 5s ease-in infinite;
+            z-index: 0;
+            opacity: 0.8;
+        }
+        .balloon::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 10px solid inherit;
+        }
+        .balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            width: 1px;
+            height: 40px;
+            background: rgba(255,255,255,0.5);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(-5deg); opacity: 0; }
+            10% { opacity: 0.9; }
+            100% { transform: translateY(-100vh) rotate(5deg); opacity: 0; }
+        }
+
+        /* Cake Styles */
+        .cake-container { z-index: 2; position: relative; margin-top: 40px; }
+        .cake {
+            position: relative;
+            width: 220px;
+            height: 120px;
+            background: #f8fafc;
+            border-radius: 10px 10px 0 0;
+            border-bottom: 10px solid #94a3b8;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .cake::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 35px;
+            background: #3b82f6;
+            border-radius: 10px 10px 20px 20px;
+        }
+        .candle {
+            position: absolute;
+            bottom: 120px;
+            width: 12px;
+            height: 45px;
+            background: #fbbf24;
+            border-radius: 6px;
+            transform: translateX(-50%);
+            cursor: pointer;
+        }
+        .candle-1 { left: 25%; }
+        .candle-2 { left: 50%; }
+        .candle-3 { left: 75%; }
+        .flame {
+            position: absolute;
+            top: -25px;
+            left: -4px;
+            width: 20px;
+            height: 20px;
+            background: #f97316;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            animation: flicker 0.5s infinite alternate;
+        }
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
+            100% { transform: scale(1.1) rotate(2deg); opacity: 1; }
+        }
+
+        /* Slideshow */
+        .slide { display: none; }
+        .slide.active { display: block; animation: fade 0.5s ease-in; }
+        @keyframes fade { from { opacity: 0.4; } to { opacity: 1; } }
+
+        /* Box & Button styling */
+        .glass-box {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+        .btn-alt {
+            background: transparent;
+            border: 2px solid #64748b;
+            color: #475569;
+        }
+        .btn-alt:hover { background: rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <audio id="bday-audio" src="./Happy Birthday, My Love.mp3" preload="auto"></audio>
+
+    <!-- SCREEN 1: Envelope -->
+    <div id="screen-1" class="screen active">
+        <h1 class="text-4xl md:text-5xl mb-12 text-center text-blue-900 drop-shadow-sm">Ada Sesuatu Buat Kamu...</h1>
+        <div class="envelope-wrapper" onclick="openEnvelope(this)">
+            <div class="envelope-back"></div>
+            <div class="letter flex items-center justify-center border-2 border-blue-100">
+                <span class="text-blue-800 font-bold text-lg cursive">Pesan Spesial</span>
+            </div>
+            <div class="envelope-front"></div>
+            <div class="flap"></div>
+            <div class="absolute inset-0 flex items-center justify-center z-20 font-bold text-white text-xl drop-shadow-md pointer-events-none">
+                Buka Kotak
+            </div>
+        </div>
+        <p class="mt-8 text-slate-600 text-sm animate-pulse">Klik amplop kotak untuk membuka</p>
+    </div>
+
+    <!-- SCREEN 2: Puzzle -->
+    <div id="screen-2" class="screen">
+        <div class="glass-box p-6 md:p-10 w-full max-w-md flex flex-col items-center text-center">
+            <h2 class="text-4xl text-blue-800 mb-2">Susun Puzzle Ini</h2>
+            <p class="text-sm text-slate-600 mb-4">Geser kotaknya sampai jadi gambar utuh ya, Sayang.</p>
+            
+            <div class="puzzle-container mb-6">
+                <div class="puzzle-grid" id="puzzle"></div>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="skipPuzzle()" class="btn btn-alt">Skip Aja Deh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: Celebration Cake -->
+    <div id="screen-3" class="screen">
+        <canvas id="confetti-canvas"></canvas>
+        <div id="balloon-container" class="absolute inset-0 overflow-hidden pointer-events-none z-0"></div>
+        
+        <div class="z-10 flex flex-col items-center text-center">
+            <h1 class="text-5xl md:text-6xl text-blue-900 mb-4 drop-shadow-md">Happy Birthday My Love ❤️</h1>
+            <p class="text-xl text-slate-700 mb-10">Make a wish and blow up the candles, Beby</p>
+            
+            <div class="cake-container mb-12">
+                <div class="cake">
+                    <div class="candle candle-1" onclick="blowCandle(this)"><div class="flame"></div></div>
+                    <div class="candle candle-2" onclick="blowCandle(this)"><div class="flame"></div></div>
+                    <div class="candle candle-3" onclick="blowCandle(this)"><div class="flame"></div></div>
+                </div>
+            </div>
+
+            <button onclick="goToScreen(4)" class="btn text-lg px-8 py-3 z-10">Baca Surat Dari Aku >></button>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: Message Box -->
+    <div id="screen-4" class="screen">
+        <div class="w-full max-w-2xl mx-auto glass-box p-6 md:p-8 relative">
+            <div class="bg-white/70 p-6 rounded-2xl text-left border border-white mb-8 shadow-sm">
+                <h2 class="text-3xl text-blue-800 mb-4">Teruntuk Lelaki Hebatku, Evan,</h2>
+                <p class="mb-3 text-slate-800 leading-relaxed">
+                    Selamat bertambah usia, Sayang! 🎉 
+                </p>
+                <p class="mb-3 text-slate-800 leading-relaxed">
+                    Terima kasih sudah menjadi pasangan yang luar biasa, selalu sabar, dan selalu berusaha memberikan yang terbaik. Aku sangat bangga sama semua pencapaian kamu dan selalu bersyukur punya kamu di hidupku.
+                </p>
+                <p class="mb-4 text-slate-800 leading-relaxed">
+                    Semoga di umur yang baru ini, kamu semakin dewasa, sehat selalu, rezekinya lancar, dan semua impian kamu satu per satu terwujud. Ingat, aku akan selalu ada di sini dukung kamu terus.
+                </p>
+                <p class="font-bold text-blue-600 mt-6">I love you to the moon and back! ❤️</p>
+                <p class="cursive text-2xl text-blue-800 mt-2">Kesayanganmu yang cantik</p>
+            </div>
+            
+            <div class="text-center">
+                <button onclick="goToScreen(5)" class="btn text-lg px-8 py-3 z-10">Lihat Kenangan Kita >></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 5: Slideshow (4x5 Aspect Ratio) -->
+    <div id="screen-5" class="screen">
+        <div class="w-full max-w-lg mx-auto glass-box p-6 md:p-8 relative text-center">
+            <h2 class="text-4xl text-blue-800 mb-6 font-bold cursive">Momen Indah Kita</h2>
+            
+            <div class="mb-8 flex flex-col items-center">
+                <!-- 4x5 Aspect Ratio Container -->
+                <div id="slideshow-container" class="relative w-full max-w-[280px] md:max-w-[320px] aspect-[4/5] bg-slate-200 rounded-xl overflow-hidden mb-6 shadow-xl border-4 border-white">
+                    <img src="./MYXJ_20250608202634140_save.jpg" class="slide active absolute inset-0 w-full h-full object-cover" alt="Momen 1">
+                    <img src="./MYXJ_20250603155430941_save.jpg" class="slide absolute inset-0 w-full h-full object-cover" alt="Momen 2">
+                    <img src="./IMG-20250515-WA0000.jpg" class="slide absolute inset-0 w-full h-full object-cover" alt="Momen 3">
+                    <img src="./1761978206538.jpg" class="slide absolute inset-0 w-full h-full object-cover" alt="Momen 4">
+                </div>
+                
+                <div class="flex justify-center space-x-4">
+                    <button onclick="changeSlide(-1)" class="w-12 h-12 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center hover:bg-blue-200 transition font-bold text-xl shadow-sm">←</button>
+                    <button onclick="changeSlide(1)" class="w-12 h-12 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center hover:bg-blue-200 transition font-bold text-xl shadow-sm">→</button>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button onclick="closeEnvelopeFlow()" class="btn text-lg px-8 py-3">Tutup Kotak & Selesai</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 6: Closed Envelope -->
+    <div id="screen-6" class="screen">
+        <div class="flex flex-col items-center justify-center">
+            <!-- Closed Box Graphic -->
+            <div class="envelope-wrapper mb-8" style="cursor: default;">
+                <div class="envelope-back"></div>
+                <div class="letter"></div>
+                <div class="envelope-front"></div>
+                <div class="flap" style="transform: rotateX(0deg); z-index: 5;"></div>
+                <div class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                    <div class="bg-white rounded-full p-2 shadow-md mt-6">
+                        <div style="color: #ef4444; font-size: 2.5rem; line-height: 1;">❤️</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h1 class="text-5xl text-blue-900 mt-4 drop-shadow-sm">I Love You</h1>
+            <p class="mt-4 text-slate-600 font-medium">Sampai jumpa di momen bahagia lainnya Sayang!</p>
+        </div>
+    </div>
+
+    <script>
+        // Screen Navigation
+        function goToScreen(num) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const nextScreen = document.getElementById(`screen-${num}`);
+            if(nextScreen) {
+                nextScreen.classList.add('active');
+                if(num === 2) setTimeout(initPuzzle, 500);
+                if(num === 3) startParty();
+            }
+        }
+
+        // Screen 1
+        function openEnvelope(element) {
+            element.classList.add('open');
+
+            // Start playing the song immediately upon opening the envelope (first user interaction)
+            const audio = document.getElementById('bday-audio');
+            if(audio) {
+                audio.volume = 0.5;
+                audio.play().catch(e => console.log("Audio play prevented: ", e));
+            }
+            setTimeout(() => goToScreen(2), 1200);
+        }
+
+        // Screen 2 - Puzzle
+        const puzzleGrid = document.getElementById('puzzle');
+        let tiles = [];
+        let puzzleSolved = false;
+
+        function initPuzzle() {
+            if(tiles.length > 0) return; 
+            tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+            for(let i=0; i<20; i++){
+                const zeroIdx = tiles.indexOf(0);
+                const possibleMoves = getValidMoves(zeroIdx);
+                const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                [tiles[zeroIdx], tiles[move]] = [tiles[move], tiles[zeroIdx]];
+            }
+            renderPuzzle();
+        }
+
+        function getValidMoves(zeroIdx) {
+            const row = Math.floor(zeroIdx / 3);
+            const col = zeroIdx % 3;
+            const moves = [];
+            if(row > 0) moves.push(zeroIdx - 3);
+            if(row < 2) moves.push(zeroIdx + 3);
+            if(col > 0) moves.push(zeroIdx - 1);
+            if(col < 2) moves.push(zeroIdx + 1);
+            return moves;
+        }
+
+        function renderPuzzle() {
+            puzzleGrid.innerHTML = '';
+            tiles.forEach((t, i) => {
+                const div = document.createElement('div');
+                div.className = `puzzle-tile ${t === 0 ? 'empty' : ''}`;
+                
+                if(t !== 0) {
+                    div.textContent = t;
+                    const correctRow = Math.floor((t - 1) / 3);
+                    const correctCol = (t - 1) % 3;
+                    div.style.backgroundPosition = `-${correctCol * 100}px -${correctRow * 100}px`;
+                }
+
+                div.onclick = () => moveTile(i);
+                puzzleGrid.appendChild(div);
+            });
+        }
+
+        function moveTile(index) {
+            if(puzzleSolved) return;
+            const emptyIndex = tiles.indexOf(0);
+            const row = Math.floor(index / 3);
+            const col = index % 3;
+            const emptyRow = Math.floor(emptyIndex / 3);
+            const emptyCol = emptyIndex % 3;
+
+            if (Math.abs(row - emptyRow) + Math.abs(col - emptyCol) === 1) {
+                [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
+                renderPuzzle();
+                checkWin();
+            }
+        }
+
+        function checkWin() {
+            const winState = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+            if (JSON.stringify(tiles) === JSON.stringify(winState)) {
+                puzzleSolved = true;
+                setTimeout(() => goToScreen(3), 800);
+            }
+        }
+
+        function skipPuzzle() {
+            tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+            renderPuzzle();
+            puzzleSolved = true;
+            setTimeout(() => goToScreen(3), 600);
+        }
+
+        // Screen 3 - Party
+        let partyStarted = false;
+
+        function blowCandle(candleElement) {
+            const flame = candleElement.querySelector('.flame');
+            if(flame) flame.style.display = 'none';
+        }
+
+        function startParty() {
+            if(partyStarted) return;
+            partyStarted = true;
+            
+            const audio = document.getElementById('bday-audio');
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log("Audio autoplay prevented. User interaction required."));
+
+            createBalloons();
+            startConfetti();
+        }
+
+        function createBalloons() {
+            const container = document.getElementById('balloon-container');
+            const colors = ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'];
+            
+            for(let i=0; i<15; i++) {
+                setTimeout(() => {
+                    const balloon = document.createElement('div');
+                    balloon.className = 'balloon';
+                    balloon.style.left = Math.random() * 90 + 'vw';
+                    balloon.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    balloon.style.animationDuration = (Math.random() * 3 + 4) + 's';
+                    container.appendChild(balloon);
+                    setTimeout(() => balloon.remove(), 7000);
+                }, i * 400);
+            }
+        }
+
+        function startConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#ffed4a', '#ff7675', '#74b9ff', '#55efc4', '#a29bfe'];
+
+            for(let i=0; i<100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 2 - 1,
+                    dy: Math.random() * 3 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10
+                });
+            }
+
+            function draw() {
+                requestAnimationFrame(draw);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                    ctx.stroke();
+                    
+                    p.y += p.dy;
+                    p.x += p.dx;
+                    
+                    if(p.y > canvas.height) {
+                        p.y = -10;
+                        p.x = Math.random() * canvas.width;
+                    }
+                });
+            }
+            draw();
+        }
+
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('confetti-canvas');
+            if(canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+        });
+
+        // Screen 5 - Slideshow
+        let slideIndex = 0;
+
+        function changeSlide(n) {
+            const slides = document.querySelectorAll('#slideshow-container .slide');
+            if (slides.length === 0) return;
+            slides[slideIndex].classList.remove('active');
+            slideIndex = (slideIndex + n + slides.length) % slides.length;
+            slides[slideIndex].classList.add('active');
+        }
+
+        setInterval(() => {
+            if(document.getElementById('screen-5').classList.contains('active')) {
+                changeSlide(1);
+            }
+        }, 3000);
+
+        // Screen 6 - Close Flow
+        function closeEnvelopeFlow() {
+            const audio = document.getElementById('bday-audio');
+            if(audio) audio.pause();
+            goToScreen(6);
+        }
+    </script>
+</body>
+</html>
